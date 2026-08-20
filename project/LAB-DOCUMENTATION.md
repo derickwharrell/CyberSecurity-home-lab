@@ -61,7 +61,7 @@ sudo virsh net-dumpxml <network-name>
 | Ubuntu Desktop | 192.168.100.32 | Analysis |
 ```text
                      Host Server
-                  192.168.1.139
+                  192.168.1.xxx
                          |
                     KVM/libvirt
                          |
@@ -89,7 +89,7 @@ During installation of all three VMs, it was temporarily using the default `virb
 
 ![Default network](screenshots/default-network.png)
 
-After installation and configuration on each VM was complete, the default network was removed from each VM. Afterward, a new virtual network interface was created and connected to the `lab-isolated` network. If not deleted and rather configured the original network interface to the `lab-isolated` network, the VM would not receive an IP and could not interact with the other VMs on the `libvirt` network.
+After installation and configuration on each VM was complete, the default network was removed from each VM. Afterward, a new virtual network interface was created and connected to the `lab-isolated` network. If the original network interface was not deleted and instead configured to the `lab-isolated` network, the VM would not receive an IP and could not interact with the other VMs on the `libvirt` network.
 
 ### 4.2 Network Troubleshooting
 
@@ -101,7 +101,7 @@ This was able to show the importance of verifying virtual network configuration 
 
 ### 4.3 Network Verification
     
-To verify the connection of the three VMs, look for the IP in the virtual network interface on KVM/libvirt or use `ip route` in the console to find the subnet and the ip address. After doing so, I pinged each VM from Kali Linux to verify they were on the `lab-isolated` network. Another test I tried to verify the network was isolated from the internet and the home LAN was pinging both Google's network `8.8.8.8` and the host server `192.168.1.139`; this test is expected to fail.
+To verify the connection of the three VMs, look for the IP in the virtual network interface on KVM/libvirt or use `ip route` in the console to find the subnet and the ip address. After doing so, I pinged each VM from Kali Linux to verify they were on the `lab-isolated` network. Another test I tried to verify the network was isolated from the internet and the home LAN was pinging both Google's network `8.8.8.8` and the host server `192.168.1.xxx`; this test is expected to fail.
 
  ![Network Verify Between VMs](screenshots/netowrk-verify-succ.png)
  ![Network Isolation Test](screenshots/network-verify-fail.png)
@@ -117,7 +117,7 @@ ping -c 4 8.8.8.8
 ping -c 4 192.168.1.139
 ```
 ### 4.4 T-pot Troubleshooting
-Upon T-Pot reboot and after pulling the necessary images for the containers to be fully operational, several containers experienced startup issues. The issues that we faced us apperently was that Suricata repeatedly restarted during initialization, and the T-pot dashboard was inaccessible. The issue that was causing this was related to the network configuration on the isolated network.
+Upon T-Pot reboot and after pulling the necessary images for the containers to be fully operational, several containers experienced startup issues. The issues that we faced were apparently that Suricata repeatedly restarted during initialization, and the T-pot dashboard was inaccessible. The issue that was causing this was related to the network configuration on the isolated network.
 
 Due to the `lab-isolated` network being intentionally made to be configured to not have internet access, there was no default gateway available to T-Pot during startup. Several containers inside of T-Pot appeared to require a default route during boot up, which resulted in repeated restarts for multiple containers due to no route being present.
 
@@ -127,7 +127,7 @@ The temporary solution is due to the default route not being persistent across a
 
 After the service was restored, the dashboard of T-pot returned an HTTP Unauthorized response and booted us out of entering a username and password. After testing locally with `curl -k -I https:127.0.0.1:64297` the response showed a 401 unauthorized error. We went and found the authentication file, reset the password, and restarted Nginx (the reverse proxy/authentication layer that provides access to the Kibana dashboard). After doing so, we tested and were able to log in successfully.
 
-commands used:
+Commands used:
 to check routing problem/default gateway
 ```bash
 ip route
@@ -143,7 +143,7 @@ docker inspect nginx --format \
 ```
 Make a new password inside the authentication file (bad password)
 ```bash
-sudo htpasswd -b ~/tpotce/data/nginx/conf/nginxpasswd admin admin
+sudo htpasswd -b ~/tpotce/data/nginx/conf/nginxpasswd <username> <password>
 ```
 ## 5 Port Scanning Analysis
 The lab that was executed was Kali Linux performing a reconnaissance scan on the IP address of the T-Pot honeypots VM. This is to simulate an attacker trying to find exposed ports and services on the targeted system and how that would look from the defender's POV as well.
